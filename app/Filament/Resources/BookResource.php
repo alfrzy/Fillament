@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\DatePicker;
 
 class BookResource extends Resource
 {
@@ -26,6 +27,10 @@ class BookResource extends Resource
                 Forms\Components\TextInput::make('title')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\Richeditor::make('description')
+                    ->required()
+                    ->maxLength(653535)
+                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('author')
                     ->required()
                     ->maxLength(255),
@@ -37,9 +42,10 @@ class BookResource extends Resource
                 Forms\Components\TextInput::make('no_of_pages')
                     ->required()
                     ->numeric(),
-                Forms\Components\TextInput::make('category')
+                Forms\Components\Select::make('category_id')
+                    ->relationship(name:'category', titleAttribute:'Name')
                     ->required()
-                    ->maxLength(255),
+                    ->searchable(),
             ]);
     }
 
@@ -60,7 +66,7 @@ class BookResource extends Resource
                 Tables\Columns\TextColumn::make('no_of_pages')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('category')
+                Tables\Columns\TextColumn::make('category.Name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -76,11 +82,32 @@ class BookResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('category_id')
+                ->relationship('category','Name')
+                ->searchable(),
+                Tables\Filters\Filter::make('publication_date')
+                ->form([
+                    DatePicker::make('published_from'),
+                    DatePicker::make('published_until'),
+                ])
+                ->query(function (Builder $query, array $data): Builder {
+                    return $query
+                        ->when(
+                            $data['published_from'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('publication_date', '>=', $date),
+                        )
+                        ->when(
+                            $data['published_until'],
+                            fn (Builder $query, $date): Builder => $query->whereDate('publication_date', '<=', $date),
+                        );
+                }),
                 Tables\Filters\TrashedFilter::make(),
-                    
-            ])
+                            
+                    ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
