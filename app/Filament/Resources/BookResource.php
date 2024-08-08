@@ -18,7 +18,13 @@ class BookResource extends Resource
 {
     protected static ?string $model = Book::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-book-open';
+
+    protected static ?string $navigationLabel = 'Buku';
+
+    protected static ?string $navigationGroup ='Manajemen';
+
+    protected static ?int $navigationSort = 0;
 
     public static function form(Form $form): Form
     {
@@ -57,6 +63,9 @@ class BookResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('author')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->searchable()
+                    ->sortable(),  
                 Tables\Columns\TextColumn::make('publication_date')
                     ->date()
                     ->sortable()
